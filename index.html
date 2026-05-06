@@ -63,14 +63,15 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
 
 /* ══ Header ══ */
 #logo-area{display:flex;align-items:center;gap:10px;}
-#logo-svg{width:34px;height:34px;flex-shrink:0;}
-#logo-name{font-size:19px;font-weight:700;letter-spacing:-.02em;color:#fff;line-height:1;}
-#logo-sub{font-size:11px;color:rgba(255,255,255,.45);font-weight:400;letter-spacing:.01em;margin-top:2px;}
-#hdr-date{font-size:13px;color:rgba(255,255,255,.45);font-weight:400;}
+#logo-svg{width:38px;height:38px;flex-shrink:0;}
+#logo-name{font-size:18px;font-weight:300;letter-spacing:.01em;color:#e8f4fb;line-height:1;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;}
+#logo-name strong{font-weight:500;color:#fff;}
+#logo-sub{font-size:10px;color:rgba(232,244,251,.35);font-weight:400;letter-spacing:.04em;margin-top:2px;text-transform:uppercase;}
+#hdr-date{font-size:12px;color:rgba(90,200,250,.5);font-weight:400;}
 #hdr-urgent{background:var(--red);color:#fff;font-size:12px;font-weight:600;padding:5px 12px;border-radius:99px;display:none;letter-spacing:-.01em;}
-#notif-btn{background:none;border:none;cursor:pointer;padding:4px;opacity:.5;transition:opacity .2s;}
-#notif-btn.granted{opacity:1;}
-#notif-btn svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+#notif-btn{background:none;border:none;cursor:pointer;padding:4px;opacity:.45;transition:opacity .2s;}
+#notif-btn.granted{opacity:.9;}
+#notif-btn svg{width:20px;height:20px;stroke:#5ac8fa;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 
 /* ══ Apple-style grouped sections ══ */
 .sp{padding:16px 16px 32px;}
@@ -335,22 +336,33 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
 <!-- HEADER -->
 <div id="header">
   <div id="logo-area">
-    <svg id="logo-svg" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="40" r="40" fill="#000"/>
-      <circle cx="40" cy="40" r="36" fill="#111"/>
-      <rect x="18" y="24" width="44" height="36" rx="7" fill="#1c3557"/>
-      <rect x="18" y="24" width="44" height="14" rx="7" fill="#007aff"/>
-      <rect x="18" y="31" width="44" height="7" fill="#007aff"/>
-      <circle cx="29" cy="47" r="3" fill="#5ac8fa"/>
-      <circle cx="40" cy="47" r="3" fill="#5ac8fa"/>
-      <circle cx="51" cy="47" r="3" fill="#ff3b30"/>
-      <circle cx="29" cy="56" r="3" fill="#5ac8fa"/>
-      <circle cx="40" cy="56" r="3" fill="#ff3b30"/>
-      <circle cx="51" cy="56" r="3" fill="#48484a"/>
-      <rect x="28" y="19" width="5" height="9" rx="2.5" fill="#5ac8fa"/>
-      <rect x="47" y="19" width="5" height="9" rx="2.5" fill="#5ac8fa"/>
+    <svg id="logo-svg" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+      <!-- Fond bleu nuit doux -->
+      <rect x="0" y="0" width="96" height="96" rx="20" fill="#0d1f3c"/>
+      <rect x="0" y="0" width="96" height="96" rx="20" fill="none" stroke="#5ac8fa" stroke-width="0.8" opacity="0.25"/>
+      <!-- Cadre calendrier -->
+      <rect x="16" y="24" width="64" height="56" rx="8" fill="none" stroke="#5ac8fa" stroke-width="1" opacity="0.3"/>
+      <!-- Header calendrier bleu ciel -->
+      <rect x="16" y="24" width="64" height="18" rx="8" fill="#5ac8fa" opacity="0.88"/>
+      <rect x="16" y="33" width="64" height="9" fill="#5ac8fa" opacity="0.88"/>
+      <!-- Anneaux -->
+      <rect x="30" y="18" width="4" height="13" rx="2" fill="#5ac8fa" opacity="0.5"/>
+      <rect x="62" y="18" width="4" height="13" rx="2" fill="#5ac8fa" opacity="0.5"/>
+      <!-- Grille 4×2 -->
+      <circle cx="28" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
+      <circle cx="40" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
+      <circle cx="52" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
+      <circle cx="64" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
+      <circle cx="28" cy="65" r="2.5" fill="#5ac8fa" opacity="0.5"/>
+      <circle cx="40" cy="65" r="2.5" fill="#5ac8fa" opacity="0.5"/>
+      <circle cx="52" cy="65" r="2.5" fill="#5ac8fa" opacity="0.5"/>
+      <!-- Seul accent rouge : alerte DLC -->
+      <circle cx="64" cy="65" r="4" fill="#ff3b30"/>
     </svg>
-    <div><div id="logo-name">DLC Shop</div><div id="logo-sub">Contrôle des dates limites</div></div>
+    <div>
+      <div id="logo-name"><strong>DLC</strong> Shop</div>
+      <div id="logo-sub">Dates limites</div>
+    </div>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button id="notif-btn" onclick="requestNotifPermission()" title="Activer les notifications">
@@ -1711,20 +1723,24 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 /* ══ PWA ══ */
 function initPWA(){
   const c=document.createElement('canvas');c.width=192;c.height=192;const ctx=c.getContext('2d');
-  // Background
-  ctx.fillStyle='#000';ctx.beginPath();ctx.arc(96,96,96,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#111';ctx.beginPath();ctx.arc(96,96,88,0,Math.PI*2);ctx.fill();
-  // Calendar body
   function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
-  ctx.fillStyle='#1c3557';rr(34,52,124,100,14);ctx.fill();
-  ctx.fillStyle='#007aff';rr(34,52,124,38,14);ctx.fill();ctx.fillRect(34,70,124,20);
-  // Dots
-  [[62,104],[96,104],[130,104],[62,126],[96,126]].forEach(([x,y],i)=>{ctx.fillStyle=i>=2?'#ff3b30':'#5ac8fa';ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();});
-  ctx.fillStyle='#48484a';ctx.beginPath();ctx.arc(130,126,8,0,Math.PI*2);ctx.fill();
-  // Rings
-  ctx.fillStyle='#5ac8fa';rr(68,38,16,28,7);ctx.fill();rr(108,38,16,28,7);ctx.fill();
-  // DLC text
-  ctx.fillStyle='#fff';ctx.font='bold 42px -apple-system, Arial Black, Arial';ctx.textAlign='center';ctx.fillText('DLC',96,44);
+  // Fond bleu nuit
+  ctx.fillStyle='#0d1f3c';rr(0,0,192,192,38);ctx.fill();
+  // Liseré bleu ciel subtil
+  ctx.strokeStyle='rgba(90,200,250,0.25)';ctx.lineWidth=1.5;rr(1,1,190,190,37);ctx.stroke();
+  // Cadre calendrier
+  ctx.strokeStyle='rgba(90,200,250,0.28)';ctx.lineWidth=2;rr(28,44,136,116,16);ctx.stroke();
+  // Header bleu ciel
+  ctx.fillStyle='rgba(90,200,250,0.88)';rr(28,44,136,40,16);ctx.fill();
+  ctx.fillRect(28,62,136,22);
+  // Anneaux
+  ctx.fillStyle='rgba(90,200,250,0.5)';rr(56,30,12,28,5);ctx.fill();rr(124,30,12,28,5);ctx.fill();
+  // Grille 4×2
+  [[54,106],[78,106],[102,106],[126,106],[54,130],[78,130],[102,130]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.fillStyle='rgba(90,200,250,0.55)';ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fill();
+  });
+  // Point rouge alerte DLC
+  ctx.beginPath();ctx.fillStyle='#ff3b30';ctx.arc(126,130,9,0,Math.PI*2);ctx.fill();
   const icon=c.toDataURL('image/png');
   localStorage.setItem(NK+'_icon',icon);
   const mf={name:'DLC Shop',short_name:'DLC Shop',description:'Contrôle des dates limites de consommation',start_url:'.',display:'standalone',orientation:'portrait',theme_color:'#000000',background_color:'#000000',icons:[{src:icon,sizes:'192x192',type:'image/png'},{src:icon,sizes:'512x512',type:'image/png'}]};
