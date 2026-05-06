@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DLC Shop">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#ffffff">
 <link rel="manifest" id="pwa-manifest">
 <!-- Firebase SDK (compat — pas besoin de bundler) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -51,12 +51,12 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
 
 /* ══ Layout ══ */
 #app{height:100vh;display:flex;flex-direction:column;}
-#header{background:rgba(0,0,0,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:0.5px solid rgba(255,255,255,.12);}
+#header{background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:0.5px solid rgba(0,0,0,.08);}
 #content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
 .panel{display:none;flex:1;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .panel.active{display:flex;}
-#bottom-nav{display:flex;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:0.5px solid rgba(255,255,255,.15);height:64px;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:10px;font-weight:500;letter-spacing:.02em;font-family:var(--sf);position:relative;transition:color .2s;}
+#bottom-nav{display:flex;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:0.5px solid rgba(0,0,0,.08);height:64px;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:rgba(0,0,0,.35);cursor:pointer;font-size:10px;font-weight:500;letter-spacing:.02em;font-family:var(--sf);position:relative;transition:color .2s;}
 .nav-btn.active{color:var(--blue);}
 .nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .nbadge{position:absolute;top:4px;right:calc(50% - 22px);background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:99px;min-width:17px;text-align:center;line-height:16px;font-family:var(--sf);}
@@ -64,14 +64,14 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
 /* ══ Header ══ */
 #logo-area{display:flex;align-items:center;gap:10px;}
 #logo-svg{width:38px;height:38px;flex-shrink:0;}
-#logo-name{font-size:18px;font-weight:300;letter-spacing:.01em;color:#e8f4fb;line-height:1;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;}
-#logo-name strong{font-weight:500;color:#fff;}
-#logo-sub{font-size:10px;color:rgba(232,244,251,.35);font-weight:400;letter-spacing:.04em;margin-top:2px;text-transform:uppercase;}
-#hdr-date{font-size:12px;color:rgba(90,200,250,.5);font-weight:400;}
+#logo-name{font-size:18px;font-weight:300;letter-spacing:.01em;color:#1a1a1a;line-height:1;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;}
+#logo-name strong{font-weight:600;color:#0d1f3c;}
+#logo-sub{font-size:10px;color:rgba(42,159,214,.6);font-weight:500;letter-spacing:.04em;margin-top:2px;text-transform:uppercase;}
+#hdr-date{font-size:12px;color:rgba(0,0,0,.35);font-weight:400;}
 #hdr-urgent{background:var(--red);color:#fff;font-size:12px;font-weight:600;padding:5px 12px;border-radius:99px;display:none;letter-spacing:-.01em;}
-#notif-btn{background:none;border:none;cursor:pointer;padding:4px;opacity:.45;transition:opacity .2s;}
-#notif-btn.granted{opacity:.9;}
-#notif-btn svg{width:20px;height:20px;stroke:#5ac8fa;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+#notif-btn{background:none;border:none;cursor:pointer;padding:4px;opacity:.5;transition:opacity .2s;}
+#notif-btn.granted{opacity:1;}
+#notif-btn svg{width:20px;height:20px;stroke:#2a9fd6;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 
 /* ══ Apple-style grouped sections ══ */
 .sp{padding:16px 16px 32px;}
@@ -337,31 +337,30 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
 <div id="header">
   <div id="logo-area">
     <svg id="logo-svg" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
-      <!-- Fond bleu nuit doux -->
-      <rect x="0" y="0" width="96" height="96" rx="20" fill="#0d1f3c"/>
-      <rect x="0" y="0" width="96" height="96" rx="20" fill="none" stroke="#5ac8fa" stroke-width="0.8" opacity="0.25"/>
+      <!-- Fond blanc doux -->
+      <rect x="0" y="0" width="96" height="96" rx="20" fill="#e8f4fb"/>
       <!-- Cadre calendrier -->
-      <rect x="16" y="24" width="64" height="56" rx="8" fill="none" stroke="#5ac8fa" stroke-width="1" opacity="0.3"/>
-      <!-- Header calendrier bleu ciel -->
-      <rect x="16" y="24" width="64" height="18" rx="8" fill="#5ac8fa" opacity="0.88"/>
-      <rect x="16" y="33" width="64" height="9" fill="#5ac8fa" opacity="0.88"/>
+      <rect x="16" y="24" width="64" height="56" rx="8" fill="none" stroke="#2a9fd6" stroke-width="1" opacity="0.2"/>
+      <!-- Header calendrier bleu -->
+      <rect x="16" y="24" width="64" height="18" rx="8" fill="#2a9fd6" opacity="0.82"/>
+      <rect x="16" y="33" width="64" height="9" fill="#2a9fd6" opacity="0.82"/>
       <!-- Anneaux -->
-      <rect x="30" y="18" width="4" height="13" rx="2" fill="#5ac8fa" opacity="0.5"/>
-      <rect x="62" y="18" width="4" height="13" rx="2" fill="#5ac8fa" opacity="0.5"/>
+      <rect x="30" y="18" width="4" height="13" rx="2" fill="#2a9fd6" opacity="0.45"/>
+      <rect x="62" y="18" width="4" height="13" rx="2" fill="#2a9fd6" opacity="0.45"/>
       <!-- Grille 4×2 -->
-      <circle cx="28" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
-      <circle cx="40" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
-      <circle cx="52" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
-      <circle cx="64" cy="53" r="2.5" fill="#5ac8fa" opacity="0.5"/>
-      <circle cx="28" cy="65" r="2.5" fill="#5ac8fa" opacity="0.5"/>
-      <circle cx="40" cy="65" r="2.5" fill="#5ac8fa" opacity="0.5"/>
-      <circle cx="52" cy="65" r="2.5" fill="#5ac8fa" opacity="0.5"/>
-      <!-- Seul accent rouge : alerte DLC -->
+      <circle cx="28" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="40" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="52" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="64" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="28" cy="65" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="40" cy="65" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="52" cy="65" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <!-- Point rouge alerte DLC -->
       <circle cx="64" cy="65" r="4" fill="#ff3b30"/>
     </svg>
     <div>
       <div id="logo-name"><strong>DLC</strong> Shop</div>
-      <div id="logo-sub">Dates limites</div>
+      <div id="logo-sub">Dates limites · v3.0</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
@@ -721,8 +720,27 @@ const firebaseConfig = {
   appId: "1:407131632147:web:f730adafd4903fe26985e6"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let db = null; // null = mode hors-ligne / localStorage uniquement
+
+function initFirebase(){
+  try {
+    if(typeof firebase === 'undefined'){
+      console.warn('Firebase SDK non chargé — mode hors-ligne activé');
+      showSyncBadge('offline');
+      return;
+    }
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    // Persistance hors-ligne Firestore
+    db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    startItemsListener();
+    startPlanListener();
+  } catch(err){
+    console.warn('Firebase init échoué — mode hors-ligne:', err);
+    showSyncBadge('offline');
+    db = null;
+  }
+}
 
 // ─ Indicateur de sync ─
 function showSyncBadge(state){
@@ -739,6 +757,7 @@ function showSyncBadge(state){
 // ─ ITEMS — listener temps réel ─
 let itemsUnsubscribe=null;
 function startItemsListener(){
+  if(!db)return;
   if(itemsUnsubscribe)itemsUnsubscribe();
   itemsUnsubscribe=db.collection('dlcshop_items')
     .orderBy('dateAjout','asc')
@@ -765,6 +784,7 @@ function startItemsListener(){
 // ─ PLAN — listener temps réel ─
 let planUnsubscribe=null;
 function startPlanListener(){
+  if(!db)return;
   if(planUnsubscribe)planUnsubscribe();
   planUnsubscribe=db.collection('dlcshop_config').doc('plan')
     .onSnapshot(doc=>{
@@ -805,33 +825,34 @@ async function saveI(){
 }
 
 async function saveOneItem(item){
-  // Photos stockées localement seulement (trop lourdes pour Firestore)
   const localPhotos={};
   try{const lp=localStorage.getItem('dlcshop_photos');if(lp)Object.assign(localPhotos,JSON.parse(lp));}catch(e){}
   if(item.photo){localPhotos[item.id]=item.photo;try{localStorage.setItem('dlcshop_photos',JSON.stringify(localPhotos));}catch(e){}}
-  const {photo,...itemNoPhoto}=item; // Ne pas envoyer la photo en base64 dans Firestore
+  const {photo,...itemNoPhoto}=item;
+  try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
+  if(!db){return;} // mode hors-ligne
   try{
     showSyncBadge('syncing');
     await db.collection('dlcshop_items').doc(String(item.id)).set(itemNoPhoto);
     showSyncBadge('ok');
   }catch(err){showSyncBadge('offline');console.warn(err);}
-  try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
 }
 
 async function deleteOneItem(id){
+  try{const lp=localStorage.getItem('dlcshop_photos');if(lp){const photos=JSON.parse(lp);delete photos[id];localStorage.setItem('dlcshop_photos',JSON.stringify(photos));}}catch(e){}
+  try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
+  if(!db){return;} // mode hors-ligne
   try{
     showSyncBadge('syncing');
     await db.collection('dlcshop_items').doc(String(id)).delete();
-    // Supprimer photo locale aussi
-    try{const lp=localStorage.getItem('dlcshop_photos');if(lp){const photos=JSON.parse(lp);delete photos[id];localStorage.setItem('dlcshop_photos',JSON.stringify(photos));}}catch(e){}
     showSyncBadge('ok');
   }catch(err){showSyncBadge('offline');console.warn(err);}
-  try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
 }
 
 // ─ SAVE PLAN vers Firestore ─
 async function saveP(){
   try{localStorage.setItem(PK,JSON.stringify({zones:pz,nextId:pnid}));}catch(e){}
+  if(!db){return;} // mode hors-ligne
   try{
     showSyncBadge('syncing');
     await db.collection('dlcshop_config').doc('plan').set({zones:pz,nextId:pnid,updatedAt:new Date().toISOString()});
@@ -1724,31 +1745,29 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 function initPWA(){
   const c=document.createElement('canvas');c.width=192;c.height=192;const ctx=c.getContext('2d');
   function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
-  // Fond bleu nuit
-  ctx.fillStyle='#0d1f3c';rr(0,0,192,192,38);ctx.fill();
-  // Liseré bleu ciel subtil
-  ctx.strokeStyle='rgba(90,200,250,0.25)';ctx.lineWidth=1.5;rr(1,1,190,190,37);ctx.stroke();
+  // Fond bleu très clair
+  ctx.fillStyle='#e8f4fb';rr(0,0,192,192,38);ctx.fill();
   // Cadre calendrier
-  ctx.strokeStyle='rgba(90,200,250,0.28)';ctx.lineWidth=2;rr(28,44,136,116,16);ctx.stroke();
-  // Header bleu ciel
-  ctx.fillStyle='rgba(90,200,250,0.88)';rr(28,44,136,40,16);ctx.fill();
+  ctx.strokeStyle='rgba(42,159,214,0.2)';ctx.lineWidth=2;rr(28,44,136,116,16);ctx.stroke();
+  // Header bleu
+  ctx.fillStyle='rgba(42,159,214,0.82)';rr(28,44,136,40,16);ctx.fill();
   ctx.fillRect(28,62,136,22);
   // Anneaux
-  ctx.fillStyle='rgba(90,200,250,0.5)';rr(56,30,12,28,5);ctx.fill();rr(124,30,12,28,5);ctx.fill();
+  ctx.fillStyle='rgba(42,159,214,0.45)';rr(56,30,12,28,5);ctx.fill();rr(124,30,12,28,5);ctx.fill();
   // Grille 4×2
   [[54,106],[78,106],[102,106],[126,106],[54,130],[78,130],[102,130]].forEach(([x,y])=>{
-    ctx.beginPath();ctx.fillStyle='rgba(90,200,250,0.55)';ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.fillStyle='rgba(42,159,214,0.4)';ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fill();
   });
   // Point rouge alerte DLC
   ctx.beginPath();ctx.fillStyle='#ff3b30';ctx.arc(126,130,9,0,Math.PI*2);ctx.fill();
   const icon=c.toDataURL('image/png');
   localStorage.setItem(NK+'_icon',icon);
-  const mf={name:'DLC Shop',short_name:'DLC Shop',description:'Contrôle des dates limites de consommation',start_url:'.',display:'standalone',orientation:'portrait',theme_color:'#000000',background_color:'#000000',icons:[{src:icon,sizes:'192x192',type:'image/png'},{src:icon,sizes:'512x512',type:'image/png'}]};
+  const mf={name:'DLC Shop',short_name:'DLC Shop',description:'Contrôle des dates limites de consommation',start_url:'.',display:'standalone',orientation:'portrait',theme_color:'#ffffff',background_color:'#ffffff',icons:[{src:icon,sizes:'192x192',type:'image/png'},{src:icon,sizes:'512x512',type:'image/png'}]};
   const blob=new Blob([JSON.stringify(mf)],{type:'application/manifest+json'});
   document.getElementById('pwa-manifest').href=URL.createObjectURL(blob);
   const link=document.createElement('link');link.rel='apple-touch-icon';link.href=icon;document.head.appendChild(link);
   if('serviceWorker' in navigator){
-    const sw=`const C='dlc-v2';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',()=>clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));`;
+    const sw=`const C='dlc-v3';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==C).map(k=>caches.delete(k)))));clients.claim();});self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));`;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
   }
 }
@@ -1757,9 +1776,8 @@ function initPWA(){
 loadAll();initForm();checkManagerSession();
 document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'short',day:'2-digit',month:'short'}).replace(/^\w/,c=>c.toUpperCase());
 renderDB();updBadge();initPWA();initNotifications();
-// Démarrer les listeners Firebase
-startItemsListener();
-startPlanListener();
+// Firebase init après chargement complet de la page
+window.addEventListener('load', ()=>{ initFirebase(); });
 window.addEventListener('resize',()=>{if(tab==='plan'&&pmode==='view')fitPlan();});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkAndNotify();});
 </script>
