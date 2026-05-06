@@ -9,6 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="DLC Shop">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" id="pwa-manifest">
+<!-- Firebase SDK (compat — pas besoin de bundler) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <title>DLC SHOP</title>
 <style>
 /* ══ Apple SF Pro font stack ══ */
@@ -694,16 +697,135 @@ const INIT_ZONES=[
 
 /* ══ State ══ */
 let items=[],pz=[],pnid=41,tab='dashboard',modalId=null,pmode='view',selZid=null,pDrag=null,pRsz=null;
-let currentPhoto=null; // base64 for new item form
+let currentPhoto=null;
 
-/* ══ Persist ══ */
+/* ══ FIREBASE — Firestore temps réel ══ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDNjoK5j6fXB4ew7wz8agut8ihWLRbpoHA",
+  authDomain: "dlc-shop-30de8.firebaseapp.com",
+  projectId: "dlc-shop-30de8",
+  storageBucket: "dlc-shop-30de8.firebasestorage.app",
+  messagingSenderId: "407131632147",
+  appId: "1:407131632147:web:f730adafd4903fe26985e6"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ─ Indicateur de sync ─
+function showSyncBadge(state){
+  // state: 'syncing' | 'ok' | 'offline'
+  let el=document.getElementById('sync-badge');
+  if(!el){el=document.createElement('div');el.id='sync-badge';
+    el.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;padding:5px 14px;border-radius:99px;z-index:400;transition:all .3s;font-family:var(--sf);pointer-events:none;';
+    document.body.appendChild(el);}
+  if(state==='syncing'){el.style.background='rgba(0,122,255,.9)';el.style.color='#fff';el.textContent='↑ Synchronisation…';el.style.opacity='1';}
+  else if(state==='ok'){el.style.background='rgba(52,199,89,.9)';el.style.color='#fff';el.textContent='✓ Synchronisé';el.style.opacity='1';setTimeout(()=>{el.style.opacity='0';},1800);}
+  else{el.style.background='rgba(255,149,0,.9)';el.style.color='#fff';el.textContent='⚡ Hors ligne';el.style.opacity='1';}
+}
+
+// ─ ITEMS — listener temps réel ─
+let itemsUnsubscribe=null;
+function startItemsListener(){
+  if(itemsUnsubscribe)itemsUnsubscribe();
+  itemsUnsubscribe=db.collection('dlcshop_items')
+    .orderBy('dateAjout','asc')
+    .onSnapshot(snap=>{
+      // Merge Firebase data with local photos (photos stored locally only)
+      const localPhotos={};
+      try{const lp=localStorage.getItem('dlcshop_photos');if(lp)Object.assign(localPhotos,JSON.parse(lp));}catch(e){}
+      items=snap.docs.map(doc=>{
+        const d=doc.data();
+        return {...d,id:doc.id,photo:localPhotos[doc.id]||d.photo||null};
+      });
+      // Cache local
+      try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
+      refresh();updBadge();checkAndNotify();
+    }, err=>{
+      console.warn('Firebase offline, using cache',err);
+      showSyncBadge('offline');
+      // Fallback localStorage
+      try{const d=localStorage.getItem(IK);if(d)items=JSON.parse(d);}catch(e){}
+      refresh();updBadge();
+    });
+}
+
+// ─ PLAN — listener temps réel ─
+let planUnsubscribe=null;
+function startPlanListener(){
+  if(planUnsubscribe)planUnsubscribe();
+  planUnsubscribe=db.collection('dlcshop_config').doc('plan')
+    .onSnapshot(doc=>{
+      if(doc.exists){
+        const d=doc.data();
+        pz=d.zones||JSON.parse(JSON.stringify(INIT_ZONES));
+        pnid=d.nextId||41;
+        try{localStorage.setItem(PK,JSON.stringify({zones:pz,nextId:pnid}));}catch(e){}
+        if(tab==='plan')renderPlan();
+      } else {
+        // Premier lancement : on pousse les zones initiales
+        pz=JSON.parse(JSON.stringify(INIT_ZONES));pnid=41;
+        saveP();
+      }
+    }, err=>{
+      console.warn('Plan offline',err);
+      try{const p=localStorage.getItem(PK);if(p){const pd=JSON.parse(p);pz=pd.zones;pnid=pd.nextId||41;}else pz=JSON.parse(JSON.stringify(INIT_ZONES));}
+      catch(e){pz=JSON.parse(JSON.stringify(INIT_ZONES));}
+    });
+}
+
+// ─ Chargement initial (cache localStorage en attendant Firebase) ─
 function loadAll(){
   try{const d=localStorage.getItem(IK);if(d)items=JSON.parse(d);}catch(e){}
   try{const p=localStorage.getItem(PK);if(p){const pd=JSON.parse(p);pz=pd.zones;pnid=pd.nextId||41;}else pz=JSON.parse(JSON.stringify(INIT_ZONES));}
   catch(e){pz=JSON.parse(JSON.stringify(INIT_ZONES));}
 }
-function saveI(){try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}}
-function saveP(){try{localStorage.setItem(PK,JSON.stringify({zones:pz,nextId:pnid}));}catch(e){}}
+
+// ─ SAVE ITEMS vers Firestore ─
+async function saveI(){
+  // Toujours garder une copie locale
+  try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
+  showSyncBadge('syncing');
+  const batch=db.batch();
+  // On travaille en upsert sur chaque item
+  // (appelé après chaque action unitaire via saveOneItem / deleteOneItem)
+  showSyncBadge('ok');
+}
+
+async function saveOneItem(item){
+  // Photos stockées localement seulement (trop lourdes pour Firestore)
+  const localPhotos={};
+  try{const lp=localStorage.getItem('dlcshop_photos');if(lp)Object.assign(localPhotos,JSON.parse(lp));}catch(e){}
+  if(item.photo){localPhotos[item.id]=item.photo;try{localStorage.setItem('dlcshop_photos',JSON.stringify(localPhotos));}catch(e){}}
+  const {photo,...itemNoPhoto}=item; // Ne pas envoyer la photo en base64 dans Firestore
+  try{
+    showSyncBadge('syncing');
+    await db.collection('dlcshop_items').doc(String(item.id)).set(itemNoPhoto);
+    showSyncBadge('ok');
+  }catch(err){showSyncBadge('offline');console.warn(err);}
+  try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
+}
+
+async function deleteOneItem(id){
+  try{
+    showSyncBadge('syncing');
+    await db.collection('dlcshop_items').doc(String(id)).delete();
+    // Supprimer photo locale aussi
+    try{const lp=localStorage.getItem('dlcshop_photos');if(lp){const photos=JSON.parse(lp);delete photos[id];localStorage.setItem('dlcshop_photos',JSON.stringify(photos));}}catch(e){}
+    showSyncBadge('ok');
+  }catch(err){showSyncBadge('offline');console.warn(err);}
+  try{localStorage.setItem(IK,JSON.stringify(items));}catch(e){}
+}
+
+// ─ SAVE PLAN vers Firestore ─
+async function saveP(){
+  try{localStorage.setItem(PK,JSON.stringify({zones:pz,nextId:pnid}));}catch(e){}
+  try{
+    showSyncBadge('syncing');
+    await db.collection('dlcshop_config').doc('plan').set({zones:pz,nextId:pnid,updatedAt:new Date().toISOString()});
+    showSyncBadge('ok');
+  }catch(err){showSyncBadge('offline');console.warn(err);}
+}
 
 /* ══ Urgency helpers ══ */
 function du(s){if(!s)return 999;const t=new Date();t.setHours(0,0,0,0);const d=new Date(s);d.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
@@ -830,9 +952,9 @@ function handleModalPhoto(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    const item=items.find(i=>i.id===modalId);if(!item)return;
+    const item=items.find(i=>i.id===modalId||i.id===String(modalId));if(!item)return;
     item.photo=e.target.result;
-    saveI();
+    saveOneItem(item);
     const wrap=document.getElementById('m-photo-wrap');
     const img=document.getElementById('m-photo');
     wrap.style.display='block';img.src=item.photo;
@@ -856,11 +978,12 @@ function submitForm(){
   if(!prod){toast('⚠️ Nom du produit requis');return;}
   if(!dlc){toast('⚠️ DLC requise');return;}
   if(!ray){toast('⚠️ Rayon requis');return;}
-  items.push({id:Date.now(),produit:prod,numHope:document.getElementById('f-hope').value.trim(),
+  const newItem={id:String(Date.now()),produit:prod,numHope:document.getElementById('f-hope').value.trim(),
     qtyConditionnement:parseInt(document.getElementById('f-qty-cond').value)||0,
     rayon:ray,dlc,qtePerdues:parseInt(document.getElementById('f-perdues').value)||0,
-    statut:'actif',dateAjout:new Date().toISOString(),photo:currentPhoto||null});
-  saveI();toast('✅ Produit enregistré');
+    statut:'actif',dateAjout:new Date().toISOString(),photo:currentPhoto||null};
+  items.push(newItem);
+  saveOneItem(newItem);toast('✅ Produit enregistré');
   document.getElementById('f-produit').value='';document.getElementById('f-hope').value='';
   document.getElementById('f-qty-cond').value='';document.getElementById('f-rayon').value='';
   document.getElementById('f-perdues').value='0';
@@ -897,16 +1020,17 @@ function modalSave(){
   const item=items.find(i=>i.id===modalId);if(!item)return;
   item.qtePerdues=parseInt(document.getElementById('m-perdues').value)||0;
   item.dlc=document.getElementById('m-dlc-e').value;
-  saveI();closeModal();toast('✅ Mis à jour');refresh();updBadge();
+  saveOneItem(item);closeModal();toast('✅ Mis à jour');refresh();updBadge();
 }
 function modalRetire(){
   const item=items.find(i=>i.id===modalId);if(!item)return;
   item.statut=item.statut==='retire'?'actif':'retire';
-  saveI();closeModal();toast(item.statut==='retire'?'⬜ Retiré du rayon':'✅ Remis en rayon');refresh();updBadge();
+  saveOneItem(item);closeModal();toast(item.statut==='retire'?'⬜ Retiré du rayon':'✅ Remis en rayon');refresh();updBadge();
 }
 function modalDelete(){
   if(!confirm('Supprimer définitivement ce produit ?'))return;
-  items=items.filter(i=>i.id!==modalId);saveI();closeModal();toast('Supprimé');refresh();updBadge();
+  const delId=modalId;
+  items=items.filter(i=>i.id!==delId);deleteOneItem(String(delId));closeModal();toast('Supprimé');refresh();updBadge();
 }
 function refresh(){if(tab==='dashboard')renderDB();else if(tab==='liste')renderListe();else if(tab==='stats')renderStats();else if(tab==='plan')renderPlan();}
 function updBadge(){
@@ -972,12 +1096,13 @@ function initSwipe(wrap,card){
 
 function swipeAction(id,action){
   if(action==='retire'){
-    const item=items.find(i=>i.id===id);if(!item)return;
+    const item=items.find(i=>i.id===id||i.id===String(id));if(!item)return;
     item.statut=item.statut==='retire'?'actif':'retire';
-    saveI();toast(item.statut==='retire'?'⬜ Retiré du rayon':'✅ Remis en rayon');
+    saveOneItem(item);toast(item.statut==='retire'?'⬜ Retiré du rayon':'✅ Remis en rayon');
   } else if(action==='delete'){
     if(!confirm('Supprimer ce produit définitivement ?'))return;
-    items=items.filter(i=>i.id!==id);saveI();toast('🗑 Supprimé');
+    items=items.filter(i=>i.id!==id&&i.id!==String(id));
+    deleteOneItem(String(id));toast('🗑 Supprimé');
   }
   refresh();updBadge();
 }
@@ -1616,9 +1741,13 @@ function initPWA(){
 loadAll();initForm();checkManagerSession();
 document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'short',day:'2-digit',month:'short'}).replace(/^\w/,c=>c.toUpperCase());
 renderDB();updBadge();initPWA();initNotifications();
+// Démarrer les listeners Firebase
+startItemsListener();
+startPlanListener();
 window.addEventListener('resize',()=>{if(tab==='plan'&&pmode==='view')fitPlan();});
-// Check notifications when user returns to the tab
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkAndNotify();});
 </script>
+</body>
+</html>
 </body>
 </html>
