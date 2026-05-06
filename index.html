@@ -328,9 +328,48 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
 .empty-em{font-size:48px;margin-bottom:12px;}
 .empty h3{font-size:17px;font-weight:600;color:var(--label3);letter-spacing:-.02em;}
 .empty p{font-size:14px;margin-top:5px;font-weight:400;}
+
+/* ══ Splash screen ══ */
+#splash{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;pointer-events:none;}
+#splash.hide{animation:splashOut .45s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes splashOut{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
+#splash-logo{animation:splashIn .55s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes splashIn{0%{opacity:0;transform:scale(.7)}100%{opacity:1;transform:scale(1)}}
+#splash-name{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:28px;font-weight:300;color:#0d1f3c;letter-spacing:.02em;margin-top:18px;opacity:0;animation:splashFadeUp .5s .25s cubic-bezier(.4,0,.2,1) forwards;}
+#splash-name strong{font-weight:600;}
+#splash-sub{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:500;color:rgba(42,159,214,.7);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;opacity:0;animation:splashFadeUp .5s .38s cubic-bezier(.4,0,.2,1) forwards;}
+#splash-dot{width:5px;height:5px;border-radius:50%;background:#ff3b30;margin-top:24px;opacity:0;animation:splashFadeUp .4s .5s ease forwards,pulse .8s .9s ease-in-out 2;}
+@keyframes splashFadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.6)}}
 </style>
 </head>
 <body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash">
+  <div id="splash-logo">
+    <svg width="88" height="88" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="96" height="96" rx="22" fill="#e8f4fb"/>
+      <rect x="16" y="24" width="64" height="56" rx="8" fill="none" stroke="#2a9fd6" stroke-width="1" opacity="0.2"/>
+      <rect x="16" y="24" width="64" height="18" rx="8" fill="#2a9fd6" opacity="0.82"/>
+      <rect x="16" y="33" width="64" height="9" fill="#2a9fd6" opacity="0.82"/>
+      <rect x="30" y="18" width="4" height="13" rx="2" fill="#2a9fd6" opacity="0.45"/>
+      <rect x="62" y="18" width="4" height="13" rx="2" fill="#2a9fd6" opacity="0.45"/>
+      <circle cx="28" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="40" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="52" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="64" cy="53" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="28" cy="65" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="40" cy="65" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="52" cy="65" r="2.5" fill="#2a9fd6" opacity="0.4"/>
+      <circle cx="64" cy="65" r="4" fill="#ff3b30"/>
+    </svg>
+  </div>
+  <div id="splash-name"><strong>DLC</strong> Shop</div>
+  <div id="splash-sub">Contrôle des dates limites</div>
+  <div id="splash-dot"></div>
+</div>
+
 <div id="app">
 
 <!-- HEADER -->
@@ -1738,7 +1777,31 @@ function addPZ(){const z={id:pnid++,x:200,y:200,w:120,h:60,label:'Nouveau rayon'
 function deletePZ(){if(!selZid||!confirm('Supprimer cette zone ?'))return;pz=pz.filter(z=>z.id!==selZid);selZid=null;saveP();renderPlan();toast('Supprimée');}
 function resetPlan(){if(!confirm('Réinitialiser le plan ?'))return;pz=JSON.parse(JSON.stringify(INIT_ZONES));pnid=41;selZid=null;saveP();renderPlan();toast('Plan réinitialisé');}
 
-/* ══ Utils ══ */
+/* ══ Favicon dynamique ══ */
+function initFavicon(){
+  const c=document.createElement('canvas');c.width=64;c.height=64;const ctx=c.getContext('2d');
+  function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+  ctx.fillStyle='#e8f4fb';rr(0,0,64,64,13);ctx.fill();
+  ctx.fillStyle='rgba(42,159,214,0.82)';rr(9,15,46,13,5);ctx.fill();ctx.fillRect(9,20,46,8);
+  ctx.fillStyle='rgba(42,159,214,0.45)';rr(18,9,4,10,2);ctx.fill();rr(42,9,4,10,2);ctx.fill();
+  [[18,35],[26,35],[34,35],[42,35],[18,43],[26,43],[34,43]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.fillStyle='rgba(42,159,214,0.4)';ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();
+  });
+  ctx.beginPath();ctx.fillStyle='#ff3b30';ctx.arc(42,43,3.5,0,Math.PI*2);ctx.fill();
+  // Injecter comme favicon
+  let link=document.querySelector("link[rel~='icon']");
+  if(!link){link=document.createElement('link');link.rel='icon';document.head.appendChild(link);}
+  link.type='image/png';link.href=c.toDataURL('image/png');
+}
+
+/* ══ Splash dismiss ══ */
+function dismissSplash(){
+  const splash=document.getElementById('splash');
+  if(!splash)return;
+  splash.classList.add('hide');
+  setTimeout(()=>splash.remove(),500);
+}
+
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2400);}
 
 /* ══ PWA ══ */
@@ -1775,7 +1838,9 @@ function initPWA(){
 /* ══ Init ══ */
 loadAll();initForm();checkManagerSession();
 document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'short',day:'2-digit',month:'short'}).replace(/^\w/,c=>c.toUpperCase());
-renderDB();updBadge();initPWA();initNotifications();
+renderDB();updBadge();initPWA();initFavicon();initNotifications();
+// Splash : disparaît après 1.6s
+setTimeout(dismissSplash, 1600);
 // Firebase init après chargement complet de la page
 window.addEventListener('load', ()=>{ initFirebase(); });
 window.addEventListener('resize',()=>{if(tab==='plan'&&pmode==='view')fitPlan();});
