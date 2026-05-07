@@ -460,8 +460,8 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
               </button>
             </div>
           </div>
-          <input type="file" id="photo-input-cam" accept="image/*" capture="environment" onchange="handlePhoto(this)">
-          <input type="file" id="photo-input-lib" accept="image/*" onchange="handlePhoto(this)">
+          <input type="file" id="photo-input-cam" accept="image/*" capture="environment" onchange="handlePhoto(this)" style="display:none">
+          <input type="file" id="photo-input-lib" accept="image/*" onchange="handlePhoto(this)" style="display:none">
         </div>
       </div>
 
@@ -481,6 +481,16 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
       </div>
 
       <div class="form-grp">
+        <div class="form-row">
+          <label>Date d'ajout</label>
+          <input type="text" id="f-date-ajout" readonly style="color:var(--label4);font-size:14px;cursor:default;">
+        </div>
+        <div class="form-row">
+          <label>Ajouté par</label>
+          <select id="f-collab" style="color:var(--label);font-weight:500;">
+            <option value="">— Choisir —</option>
+          </select>
+        </div>
         <div class="form-row">
           <label>Rayon</label>
           <select id="f-rayon"><option value="">Choisir…</option></select>
@@ -602,7 +612,23 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
         <div class="mgr-title">Tableau Manager</div>
         <button class="mgr-lock-btn" onclick="lockManager()">🔒 Verrouiller</button>
       </div>
-      <div style="padding:0 16px 32px"><div id="mgr-content"></div></div>
+      <div style="padding:0 16px 32px">
+        <!-- Gestion collaborateurs -->
+        <div class="grp-title" style="margin-top:16px">👥 Collaborateurs</div>
+        <div style="background:var(--bg2);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px rgba(0,0,0,.05);margin-bottom:4px;">
+          <div id="collab-list"></div>
+          <div style="display:flex;gap:8px;padding:12px 14px;border-top:0.5px solid var(--sep);">
+            <input type="text" id="collab-input" placeholder="Prénom du collaborateur"
+              style="flex:1;font-size:15px;font-family:var(--sf);border:none;outline:none;background:transparent;color:var(--label);"
+              onkeydown="if(event.key==='Enter')addCollab()">
+            <button onclick="addCollab()"
+              style="background:var(--blue);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sf);white-space:nowrap;">
+              + Ajouter
+            </button>
+          </div>
+        </div>
+        <div id="mgr-content"></div>
+      </div>
     </div>
   </div>
 
@@ -774,6 +800,7 @@ function initFirebase(){
     db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
     startItemsListener();
     startPlanListener();
+    startCollabsListener();
   } catch(err){
     console.warn('Firebase init échoué — mode hors-ligne:', err);
     showSyncBadge('offline');
@@ -916,6 +943,7 @@ function switchTab(t){
   document.getElementById('panel-'+t).classList.add('active');
   document.getElementById('nav-'+t).classList.add('active');
   tab=t;
+  if(t==='add')updateFormDate();
   if(t==='dashboard')renderDB();
   if(t==='liste')renderListe();
   if(t==='stats')renderStats();
@@ -963,7 +991,7 @@ function cHtml(item){
     ${photoHtml}
     <div class="pcard-body">
       <div class="pcard-name">${item.produit}</div>
-      <div class="pcard-sub">${item.rayon?`<span class="pr-tag">${item.rayon}</span>`:''} ${item.numHope?`<span class="ph-tag">HOPE ${item.numHope}</span>`:''}</div>
+      <div class="pcard-sub">${item.rayon?`<span class="pr-tag">${item.rayon}</span>`:''} ${item.numHope?`<span class="ph-tag">HOPE ${item.numHope}</span>`:''} ${item.ajoutePar?`<span class="ph-tag">👤 ${item.ajoutePar}</span>`:''}</div>
       ${item.qtePerdues>0?`<div class="pd-lost">⚠️ ${item.qtePerdues} unité(s) perdue(s)</div>`:''}
     </div>
     <div class="pcard-right">
@@ -1037,11 +1065,21 @@ function handleModalPhoto(input){
 }
 
 /* ══ Form ══ */
+function updateFormDate(){
+  const now=new Date();
+  const str=now.toLocaleDateString('fr-BE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const time=now.toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'});
+  const el=document.getElementById('f-date-ajout');
+  if(el)el.value=str.charAt(0).toUpperCase()+str.slice(1)+' · '+time;
+}
 function initForm(){
   const opts=RAYONS_LIST.map(r=>`<option value="${r}">${r}</option>`).join('');
   document.getElementById('f-rayon').innerHTML='<option value="">Choisir…</option>'+opts;
   document.getElementById('filter-ray').innerHTML='<option value="">Tous</option>'+opts;
   document.getElementById('f-dlc').value=new Date().toISOString().split('T')[0];
+  updateFormDate();
+  updateCollabSelect();
+  setInterval(updateFormDate, 60000);
 }
 function submitForm(){
   const prod=document.getElementById('f-produit').value.trim();
@@ -1050,10 +1088,12 @@ function submitForm(){
   if(!prod){toast('⚠️ Nom du produit requis');return;}
   if(!dlc){toast('⚠️ DLC requise');return;}
   if(!ray){toast('⚠️ Rayon requis');return;}
+  const collab=document.getElementById('f-collab').value;
   const newItem={id:String(Date.now()),produit:prod,numHope:document.getElementById('f-hope').value.trim(),
     qtyConditionnement:parseInt(document.getElementById('f-qty-cond').value)||0,
     rayon:ray,dlc,qtePerdues:parseInt(document.getElementById('f-perdues').value)||0,
-    statut:'actif',dateAjout:new Date().toISOString(),photo:currentPhoto||null};
+    statut:'actif',dateAjout:new Date().toISOString(),photo:currentPhoto||null,
+    ajoutePar:collab||''};
   items.push(newItem);
   saveOneItem(newItem);toast('✅ Produit enregistré');
   document.getElementById('f-produit').value='';document.getElementById('f-hope').value='';
@@ -1179,7 +1219,85 @@ function swipeAction(id,action){
   refresh();updBadge();
 }
 
-/* ══ MANAGER — PIN ══ */
+/* ══ COLLABORATEURS ══ */
+const CK='dlcshop_collabs';
+let collabs=[];
+
+function loadCollabs(){
+  try{const d=localStorage.getItem(CK);if(d)collabs=JSON.parse(d);}catch(e){}
+  if(!collabs.length) collabs=['Alex']; // défaut
+}
+
+async function saveCollabs(){
+  try{localStorage.setItem(CK,JSON.stringify(collabs));}catch(e){}
+  if(db){
+    try{await db.collection('dlcshop_config').doc('collabs').set({list:collabs});}catch(e){}
+  }
+  renderCollabList();
+  updateCollabSelect();
+}
+
+function updateCollabSelect(){
+  const sel=document.getElementById('f-collab');
+  if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML='<option value="">— Choisir —</option>'+
+    collabs.map(c=>`<option value="${c}"${c===current?' selected':''}>${c}</option>`).join('');
+}
+
+function renderCollabList(){
+  const el=document.getElementById('collab-list');
+  if(!el)return;
+  if(!collabs.length){
+    el.innerHTML=`<div style="padding:14px 16px;font-size:14px;color:var(--label4);">Aucun collaborateur — ajoutez-en ci-dessous.</div>`;
+    return;
+  }
+  el.innerHTML=collabs.map((c,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:0.5px solid var(--sep);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--fill3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--blue);">${c.charAt(0).toUpperCase()}</div>
+        <span style="font-size:15px;font-weight:500;color:var(--label);">${c}</span>
+      </div>
+      <button onclick="deleteCollab(${i})"
+        style="background:rgba(255,59,48,.1);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--red);cursor:pointer;font-family:var(--sf);">
+        Supprimer
+      </button>
+    </div>`).join('');
+}
+
+function addCollab(){
+  const input=document.getElementById('collab-input');
+  const name=(input.value||'').trim();
+  if(!name){toast('⚠️ Entrez un prénom');return;}
+  if(collabs.find(c=>c.toLowerCase()===name.toLowerCase())){toast('⚠️ Ce collaborateur existe déjà');return;}
+  collabs.push(name);
+  input.value='';
+  saveCollabs();
+  toast(`✅ ${name} ajouté`);
+}
+
+function deleteCollab(idx){
+  const name=collabs[idx];
+  if(!confirm(`Supprimer ${name} de la liste ?`))return;
+  collabs.splice(idx,1);
+  saveCollabs();
+  toast(`🗑 ${name} supprimé`);
+}
+
+// Sync Firebase collabs au démarrage
+function startCollabsListener(){
+  if(!db)return;
+  db.collection('dlcshop_config').doc('collabs').onSnapshot(doc=>{
+    if(doc.exists){
+      collabs=doc.data().list||collabs;
+      try{localStorage.setItem(CK,JSON.stringify(collabs));}catch(e){}
+      updateCollabSelect();
+      renderCollabList();
+    }
+  },()=>{});
+}
+
+
 const MANAGER_PIN='1234';
 const MK='dlcshop_mgr';
 let pinBuffer='';
@@ -1223,6 +1341,7 @@ function showManagerDash(){
   document.getElementById('mgr-pin-screen').style.display='none';
   document.getElementById('mgr-dashboard').style.display='flex';
   document.getElementById('mgr-dashboard').style.flexDirection='column';
+  renderCollabList();
   renderManager();
 }
 function checkManagerSession(){
@@ -1363,6 +1482,35 @@ function renderManager(){
       Exporter les données (CSV)
     </button>
   </div>`;
+
+  // ── Stats par collaborateur
+  const byCollab={};
+  all.forEach(i=>{
+    const c=i.ajoutePar||'Non renseigné';
+    if(!byCollab[c])byCollab[c]={name:c,count:0,pertes:0,expired:0};
+    byCollab[c].count++;
+    byCollab[c].pertes+=i.qtePerdues||0;
+    if(du(i.dlc)<0&&i.statut==='actif')byCollab[c].expired++;
+  });
+  const collabStats=Object.values(byCollab).sort((a,b)=>b.count-a.count);
+  if(collabStats.length>1||(collabStats.length===1&&collabStats[0].name!=='Non renseigné')){
+    html+=`<div class="grp-title" style="margin-top:20px">👤 Activité par collaborateur</div>
+    <div class="mgr-list">`;
+    collabStats.forEach(c=>{
+      html+=`<div class="mgr-list-item">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(0,122,255,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--blue);flex-shrink:0;">${c.name.charAt(0).toUpperCase()}</div>
+        <div class="mgr-item-info">
+          <div class="mgr-item-name">${c.name}</div>
+          <div class="mgr-item-sub">${c.count} contrôle${c.count>1?'s':''} · ${c.pertes} perte${c.pertes>1?'s':''}${c.expired>0?` · <span style="color:var(--red)">${c.expired} expiré${c.expired>1?'s':''}</span>`:''}</div>
+        </div>
+        <div class="mgr-item-val">
+          <div class="mgr-item-num" style="color:var(--blue)">${c.count}</div>
+          <div class="mgr-item-unit">ajouts</div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
 
   document.getElementById('mgr-content').innerHTML=html;
 }
@@ -1836,7 +1984,7 @@ function initPWA(){
 }
 
 /* ══ Init ══ */
-loadAll();initForm();checkManagerSession();
+loadAll();loadCollabs();initForm();checkManagerSession();
 document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'short',day:'2-digit',month:'short'}).replace(/^\w/,c=>c.toUpperCase());
 renderDB();updBadge();initPWA();initFavicon();initNotifications();
 // Splash : disparaît après 1.6s
