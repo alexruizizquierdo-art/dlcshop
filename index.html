@@ -46,22 +46,55 @@
   --dark-sep: rgba(255,255,255,.1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;}
-body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:manipulation;-webkit-font-smoothing:antialiased;}
+html{height:100%;height:-webkit-fill-available;}
+body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:manipulation;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:-webkit-fill-available;overflow:hidden;}
 
 /* ══ Layout ══ */
-#app{height:100vh;display:flex;flex-direction:column;}
-#header{background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:0.5px solid rgba(0,0,0,.08);}
-#content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-.panel{display:none;flex:1;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  height:100vh;height:100dvh;
+}
+#header{background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:0.5px solid rgba(0,0,0,.08);z-index:10;}
+#content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.panel{display:none;flex:1;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;}
 .panel.active{display:flex;}
-#bottom-nav{display:flex;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:0.5px solid rgba(0,0,0,.08);height:64px;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);}
+#bottom-nav{
+  display:flex;flex-shrink:0;
+  background:rgba(255,255,255,.97);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:0.5px solid rgba(0,0,0,.08);
+  height:64px;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  z-index:10;
+}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:rgba(0,0,0,.35);cursor:pointer;font-size:10px;font-weight:500;letter-spacing:.02em;font-family:var(--sf);position:relative;transition:color .2s;}
 .nav-btn.active{color:var(--blue);}
 .nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .nbadge{position:absolute;top:4px;right:calc(50% - 22px);background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:99px;min-width:17px;text-align:center;line-height:16px;font-family:var(--sf);}
 
-/* ══ Header ══ */
+/* ══ Tablet & landscape ══ */
+@media (min-width:768px){
+  #bottom-nav{height:62px;}
+  .nav-btn{font-size:11px;}
+  #stat-row{gap:14px;}
+}
+@media (orientation:landscape) and (min-width:768px){
+  /* Tablette paysage : nav reste en bas, plus compacte */
+  #bottom-nav{height:52px;}
+  #header{height:52px;}
+}
+@media (orientation:landscape) and (max-height:450px){
+  /* Téléphone paysage : nav latérale gauche */
+  #app{flex-direction:row;}
+  #bottom-nav{
+    flex-direction:column;
+    width:68px;height:auto;
+    border-top:none;border-right:0.5px solid rgba(0,0,0,.08);
+    padding-bottom:0;padding-right:env(safe-area-inset-right,0px);
+  }
+  #content{flex:1;min-width:0;}
+}
 #logo-area{display:flex;align-items:center;gap:10px;}
 #logo-svg{width:38px;height:38px;flex-shrink:0;}
 #logo-name{font-size:18px;font-weight:300;letter-spacing:.01em;color:#1a1a1a;line-height:1;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;}
@@ -1973,7 +2006,7 @@ function initPWA(){
   ctx.beginPath();ctx.fillStyle='#ff3b30';ctx.arc(126,130,9,0,Math.PI*2);ctx.fill();
   const icon=c.toDataURL('image/png');
   localStorage.setItem(NK+'_icon',icon);
-  const mf={name:'DLC Shop',short_name:'DLC Shop',description:'Contrôle des dates limites de consommation',start_url:'.',display:'standalone',orientation:'portrait',theme_color:'#ffffff',background_color:'#ffffff',icons:[{src:icon,sizes:'192x192',type:'image/png'},{src:icon,sizes:'512x512',type:'image/png'}]};
+  const mf={name:'DLC Shop',short_name:'DLC Shop',description:'Contrôle des dates limites de consommation',start_url:'.',display:'standalone',theme_color:'#ffffff',background_color:'#ffffff',icons:[{src:icon,sizes:'192x192',type:'image/png'},{src:icon,sizes:'512x512',type:'image/png'}]};
   const blob=new Blob([JSON.stringify(mf)],{type:'application/manifest+json'});
   document.getElementById('pwa-manifest').href=URL.createObjectURL(blob);
   const link=document.createElement('link');link.rel='apple-touch-icon';link.href=icon;document.head.appendChild(link);
