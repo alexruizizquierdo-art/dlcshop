@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -46,26 +46,30 @@
   --dark-sep: rgba(255,255,255,.1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{height:100%;height:-webkit-fill-available;}
-body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:manipulation;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:-webkit-fill-available;overflow:hidden;}
+html,body{margin:0;padding:0;width:100%;overflow:hidden;}
+body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:manipulation;-webkit-font-smoothing:antialiased;}
 
 /* ══ Layout ══ */
 #app{
-  position:fixed;inset:0;
   display:flex;flex-direction:column;
-  height:100vh;height:100dvh;
+  width:100%;
+  overflow:hidden;
+  /* hauteur forcée via JS, fallback CSS */
+  height:100vh;
+  height:100dvh;
 }
-#header{background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:0.5px solid rgba(0,0,0,.08);z-index:10;}
+#header{background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:0 16px;height:58px;min-height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:0.5px solid rgba(0,0,0,.08);z-index:10;}
 #content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 .panel{display:none;flex:1;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;}
 .panel.active{display:flex;}
 #bottom-nav{
-  display:flex;flex-shrink:0;
+  display:flex;
+  flex-shrink:0;
   background:rgba(255,255,255,.97);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-top:0.5px solid rgba(0,0,0,.08);
-  height:64px;
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  min-height:58px;
+  height:58px;
   z-index:10;
 }
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:rgba(0,0,0,.35);cursor:pointer;font-size:10px;font-weight:500;letter-spacing:.02em;font-family:var(--sf);position:relative;transition:color .2s;}
@@ -75,23 +79,19 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
 
 /* ══ Tablet & landscape ══ */
 @media (min-width:768px){
-  #bottom-nav{height:62px;}
+  #bottom-nav{height:62px;min-height:62px;}
   .nav-btn{font-size:11px;}
-  #stat-row{gap:14px;}
 }
 @media (orientation:landscape) and (min-width:768px){
-  /* Tablette paysage : nav reste en bas, plus compacte */
-  #bottom-nav{height:52px;}
-  #header{height:52px;}
+  #bottom-nav{height:52px;min-height:52px;}
+  #header{height:52px;min-height:52px;}
 }
 @media (orientation:landscape) and (max-height:450px){
-  /* Téléphone paysage : nav latérale gauche */
   #app{flex-direction:row;}
   #bottom-nav{
     flex-direction:column;
-    width:68px;height:auto;
+    width:68px;height:auto;min-height:unset;
     border-top:none;border-right:0.5px solid rgba(0,0,0,.08);
-    padding-bottom:0;padding-right:env(safe-area-inset-right,0px);
   }
   #content{flex:1;min-width:0;}
 }
@@ -2015,6 +2015,24 @@ function initPWA(){
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
   }
 }
+
+/* ══ Hauteur dynamique — fix Samsung Chrome ══ */
+function fixAppHeight(){
+  const app=document.getElementById('app');
+  if(!app)return;
+  // window.innerHeight = hauteur visible réelle (sans les barres Chrome)
+  app.style.height=window.innerHeight+'px';
+}
+fixAppHeight();
+window.addEventListener('resize',fixAppHeight);
+window.addEventListener('orientationchange',()=>setTimeout(fixAppHeight,300));
+
+// Déblocage rotation écran
+try{
+  if(screen.orientation && screen.orientation.unlock){
+    screen.orientation.unlock();
+  }
+}catch(e){}
 
 /* ══ Init ══ */
 loadAll();loadCollabs();initForm();checkManagerSession();
