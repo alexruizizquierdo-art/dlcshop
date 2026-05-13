@@ -533,6 +533,10 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
           <input type="date" id="f-dlc">
         </div>
         <div class="form-row">
+          <label>Qté à échéance</label>
+          <input type="number" id="f-echeance" placeholder="0" min="0" value="0" inputmode="numeric">
+        </div>
+        <div class="form-row">
           <label>Qté perdues</label>
           <input type="number" id="f-perdues" value="0" min="0" inputmode="numeric">
         </div>
@@ -705,22 +709,35 @@ body{font-family:var(--sf);background:var(--bg);color:var(--label);touch-action:
         <button class="btn-x" onclick="closeModal()">✕</button>
       </div>
       <div id="m-badge" class="m-badge"></div>
-      <div class="m-infocard">
-        <div class="m-infoline"><span class="m-infolbl">N° HOPE</span><span class="m-infoval" id="m-hope">—</span></div>
-        <div class="m-infoline"><span class="m-infolbl">Rayon</span><span class="m-infoval" id="m-rayon">—</span></div>
-        <div class="m-infoline"><span class="m-infolbl">DLC</span><span class="m-infoval" id="m-dlc">—</span></div>
-        <div class="m-infoline"><span class="m-infolbl">Qté / conditionnement</span><span class="m-infoval" id="m-qty">—</span></div>
-        <div class="m-infoline"><span class="m-infolbl">Ajouté le</span><span class="m-infoval" id="m-added">—</span></div>
-      </div>
-      <div class="m-edit-title">Modifier</div>
+
+      <div class="m-edit-title">Modifier les informations</div>
       <div class="m-edit-grp">
-        <div class="m-edit-row"><label>Qté perdues</label><input type="number" id="m-perdues" min="0" inputmode="numeric"></div>
-        <div class="m-edit-row"><label>DLC (correction)</label><input type="date" id="m-dlc-e"></div>
+        <div class="m-edit-row"><label>Produit</label><input type="text" id="m-produit-e" autocomplete="off"></div>
+        <div class="m-edit-row"><label>N° HOPE</label><input type="text" id="m-hope-e" inputmode="numeric"></div>
+        <div class="m-edit-row"><label>Qté / conditionnement</label><input type="number" id="m-qty-e" min="0" inputmode="numeric"></div>
+        <div class="m-edit-row">
+          <label>Rayon</label>
+          <select id="m-rayon-e" style="flex:1;font-size:15px;font-family:var(--sf);border:none;outline:none;background:transparent;color:var(--label);text-align:right;-webkit-appearance:none;"></select>
+        </div>
+        <div class="m-edit-row">
+          <label>Ajouté par</label>
+          <select id="m-collab-e" style="flex:1;font-size:15px;font-family:var(--sf);border:none;outline:none;background:transparent;color:var(--label);text-align:right;-webkit-appearance:none;"></select>
+        </div>
+        <div class="m-edit-row"><label>DLC</label><input type="date" id="m-dlc-e"></div>
+        <div class="m-edit-row"><label>Qté à échéance</label><input type="number" id="m-echeance-e" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="m-edit-row"><label>Qté perdues</label><input type="number" id="m-perdues" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
+
       <button class="m-photo-change-btn" onclick="document.getElementById('m-photo-input').click()">
         📸 Changer / Ajouter une photo
       </button>
-      <input type="file" class="m-photo-input" id="m-photo-input" accept="image/*" capture="environment" onchange="handleModalPhoto(this)">
+      <button class="m-photo-change-btn" style="background:rgba(0,122,255,.08);color:var(--blue);margin-top:6px;" onclick="const _lid=modalId;closeModal();openLocate(_lid);">
+        📍 Localiser sur le plan
+      </button>
+      <input type="file" class="m-photo-input" id="m-photo-input" accept="image/*" capture="environment" onchange="handleModalPhoto(this)" style="display:none">
+      <div style="margin-top:8px;padding:10px 0;border-top:0.5px solid var(--sep);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--label4);" id="m-added-info">—</span>
+      </div>
       <div class="btn-row">
         <button class="ba ba-ret" id="btn-retire" onclick="modalRetire()">Retirer</button>
         <button class="ba ba-save" onclick="modalSave()">Sauver</button>
@@ -1026,6 +1043,7 @@ function cHtml(item){
       <div class="pcard-name">${item.produit}</div>
       <div class="pcard-sub">${item.rayon?`<span class="pr-tag">${item.rayon}</span>`:''} ${item.numHope?`<span class="ph-tag">HOPE ${item.numHope}</span>`:''} ${item.ajoutePar?`<span class="ph-tag">👤 ${item.ajoutePar}</span>`:''}</div>
       ${item.qtePerdues>0?`<div class="pd-lost">⚠️ ${item.qtePerdues} unité(s) perdue(s)</div>`:''}
+      ${item.qteEcheance>0?`<div class="pd-lost" style="color:var(--orange)">⏰ ${item.qteEcheance} unité(s) à échéance</div>`:''}
     </div>
     <div class="pcard-right">
       <div class="pd ${u==='ret'?'':pdMap[u]||''}">${fDlc(item.dlc)}</div>
@@ -1034,7 +1052,7 @@ function cHtml(item){
     </div>
   </div>`;
 }
-function bCards(){document.querySelectorAll('.pcard').forEach(el=>el.addEventListener('click',()=>openLocate(parseInt(el.dataset.id))));}
+function bCards(){document.querySelectorAll('.pcard').forEach(el=>el.addEventListener('click',()=>openModal(el.dataset.id)));}
 
 /* ══ Liste ══ */
 function renderListe(){
@@ -1125,6 +1143,7 @@ function submitForm(){
   const newItem={id:String(Date.now()),produit:prod,numHope:document.getElementById('f-hope').value.trim(),
     qtyConditionnement:parseInt(document.getElementById('f-qty-cond').value)||0,
     rayon:ray,dlc,qtePerdues:parseInt(document.getElementById('f-perdues').value)||0,
+    qteEcheance:parseInt(document.getElementById('f-echeance').value)||0,
     statut:'actif',dateAjout:new Date().toISOString(),photo:currentPhoto||null,
     ajoutePar:collab||''};
   items.push(newItem);
@@ -1132,6 +1151,7 @@ function submitForm(){
   document.getElementById('f-produit').value='';document.getElementById('f-hope').value='';
   document.getElementById('f-qty-cond').value='';document.getElementById('f-rayon').value='';
   document.getElementById('f-perdues').value='0';
+  document.getElementById('f-echeance').value='0';
   document.getElementById('f-dlc').value=new Date().toISOString().split('T')[0];
   currentPhoto=null;
   document.getElementById('photo-preview').style.display='none';
@@ -1141,30 +1161,46 @@ function submitForm(){
 
 /* ══ Modal ══ */
 function openModal(id){
-  const item=items.find(i=>i.id===id);if(!item)return;modalId=id;
+  const item=items.find(i=>i.id===id||i.id===String(id));if(!item)return;modalId=id;
   const days=du(item.dlc);
+  // Photo
   const wrap=document.getElementById('m-photo-wrap');
   const img=document.getElementById('m-photo');
   if(item.photo){wrap.style.display='block';img.src=item.photo;}else{wrap.style.display='none';}
+  // Header
   document.getElementById('m-prod').textContent=item.produit;
   const badge=document.getElementById('m-badge');
   badge.className='m-badge '+(item.statut==='retire'?'mb-r':bCls(days));
   badge.textContent=item.statut==='retire'?'⬜ Retiré du rayon':bLbl(days);
-  document.getElementById('m-hope').textContent=item.numHope||'—';
-  document.getElementById('m-rayon').textContent=item.rayon||'—';
-  document.getElementById('m-dlc').textContent=fDlc(item.dlc);
-  document.getElementById('m-qty').textContent=item.qtyConditionnement||'—';
-  document.getElementById('m-added').textContent=new Date(item.dateAjout).toLocaleString('fr-BE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  // Editable fields
+  document.getElementById('m-produit-e').value=item.produit||'';
+  document.getElementById('m-hope-e').value=item.numHope||'';
+  document.getElementById('m-qty-e').value=item.qtyConditionnement||'';
+  document.getElementById('m-dlc-e').value=item.dlc||'';
+  document.getElementById('m-echeance-e').value=item.qteEcheance||'';
   document.getElementById('m-perdues').value=item.qtePerdues||0;
-  document.getElementById('m-dlc-e').value=item.dlc;
+  // Rayon select
+  const rayonSel=document.getElementById('m-rayon-e');
+  rayonSel.innerHTML=RAYONS_LIST.map(r=>`<option value="${r}"${r===item.rayon?' selected':''}>${r}</option>`).join('');
+  // Collab select
+  const collabSel=document.getElementById('m-collab-e');
+  collabSel.innerHTML='<option value="">—</option>'+collabs.map(c=>`<option value="${c}"${c===item.ajoutePar?' selected':''}>${c}</option>`).join('');
+  // Date info
+  document.getElementById('m-added-info').textContent='Ajouté le '+new Date(item.dateAjout).toLocaleString('fr-BE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+(item.ajoutePar?' · '+item.ajoutePar:'');
   document.getElementById('btn-retire').textContent=item.statut==='retire'?'Remettre':'Retirer';
   document.getElementById('overlay').classList.add('open');
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');modalId=null;}
 function modalSave(){
-  const item=items.find(i=>i.id===modalId);if(!item)return;
-  item.qtePerdues=parseInt(document.getElementById('m-perdues').value)||0;
+  const item=items.find(i=>i.id===modalId||i.id===String(modalId));if(!item)return;
+  item.produit=document.getElementById('m-produit-e').value.trim()||item.produit;
+  item.numHope=document.getElementById('m-hope-e').value.trim();
+  item.qtyConditionnement=parseInt(document.getElementById('m-qty-e').value)||0;
+  item.rayon=document.getElementById('m-rayon-e').value||item.rayon;
+  item.ajoutePar=document.getElementById('m-collab-e').value;
   item.dlc=document.getElementById('m-dlc-e').value;
+  item.qteEcheance=parseInt(document.getElementById('m-echeance-e').value)||0;
+  item.qtePerdues=parseInt(document.getElementById('m-perdues').value)||0;
   saveOneItem(item);closeModal();toast('✅ Mis à jour');refresh();updBadge();
 }
 function modalRetire(){
@@ -1568,7 +1604,8 @@ let locateItemId=null;
 let pulseAnim=null;
 
 function openLocate(id){
-  const item=items.find(i=>i.id===id);if(!item)return;
+  const item=items.find(i=>i.id===id||i.id===String(id)||parseInt(i.id)===parseInt(id));
+  if(!item)return;
   locateItemId=id;
   const days=du(item.dlc);
   document.getElementById('ls-prod-name').textContent=item.produit;
@@ -1587,10 +1624,7 @@ function closeLocate(){
   locateItemId=null;
 }
 
-function locateToModal(){
-  closeLocate();
-  openModal(locateItemId);
-}
+function locateToModal(){closeLocate();openModal(locateItemId);}
 
 function drawLocatePlan(targetRayon){
   const canvas=document.getElementById('locate-canvas');
@@ -1876,7 +1910,7 @@ function openZP(z){
     });
   }
   document.getElementById('zp-content').innerHTML=html;
-  document.querySelectorAll('.zp-item').forEach(el=>el.addEventListener('click',()=>{closeZP();openLocate(parseInt(el.dataset.id));}));
+  document.querySelectorAll('.zp-item').forEach(el=>el.addEventListener('click',()=>{closeZP();openModal(el.dataset.id);}));
   popup.classList.add('open');
 }
 function closeZP(){document.getElementById('zpop').classList.remove('open');}
