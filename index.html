@@ -1644,7 +1644,24 @@ function drawLocatePlan(targetRayon){
   const offY=pad+(H-pad*2-FH*scale)/2;
 
   const nl=nr(targetRayon);
+  const targetZone=findZoneForRayon(targetRayon);
   let phase=0;
+
+  // Si aucune zone trouvée, afficher quand même le plan avec message
+  if(!targetZone){
+    ctx.fillStyle='#f8f8f8';
+    ctx.beginPath();ctx.roundRect(offX,offY,FW*scale,FH*scale,8);ctx.fill();
+    // Dessiner toutes les zones en grisé
+    pz.forEach(z=>{
+      const zx=offX+z.x*scale,zy=offY+z.y*scale,zw=z.w*scale,zh=z.h*scale;
+      ctx.save();ctx.globalAlpha=0.25;ctx.fillStyle=z.color;
+      ctx.beginPath();ctx.roundRect(zx,zy,zw,zh,4*scale);ctx.fill();ctx.restore();
+    });
+    ctx.fillStyle='#636366';ctx.font=`600 14px -apple-system,Arial`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`Rayon "${targetRayon}" non trouvé sur le plan`,W/2,H/2);
+    ctx.fillText('Éditez le plan pour associer ce rayon',W/2,H/2+22);
+    return;
+  }
 
   function frame(){
     ctx.clearRect(0,0,W,H);
@@ -1663,8 +1680,7 @@ function drawLocatePlan(targetRayon){
 
     // Draw all zones
     pz.forEach(z=>{
-      const zn=nr(z.label);
-      const isTarget=zn===nl;
+      const isTarget = z.id === targetZone.id;
       const zx=offX+z.x*scale,zy=offY+z.y*scale,zw=z.w*scale,zh=z.h*scale;
 
       if(isTarget){
@@ -1729,7 +1745,7 @@ function drawLocatePlan(targetRayon){
     });
 
     // PIN icon on target zone
-    const target=pz.find(z=>nr(z.label)===nl);
+    const target=targetZone;
     if(target){
       const tx=offX+(target.x+target.w/2)*scale;
       const ty=offY+target.y*scale-8;
@@ -1844,11 +1860,48 @@ function initNotifications(){
   }
 }
 
-/* ══ PLAN — urgency ══ */
-function nr(s){return(s||'').toUpperCase().trim().replace(/\s+/g,' ');}
+/* ══ PLAN — matching rayon → zone ══ */
+// Normalisation aggressive : tout en majuscules, on vire accents, espaces et ponctuation
+function nr(s){
+  return(s||'').toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // accents
+    .replace(/[^A-Z0-9]/g,''); // tout ce qui n'est pas alphanumérique
+}
+
+// Trouve la meilleure zone du plan pour un rayon donné
+function findZoneForRayon(rayonName){
+  if(!rayonName)return null;
+  const target=nr(rayonName);
+  if(!target)return null;
+
+  // 1. Correspondance exacte
+  let z=pz.find(z=>nr(z.label)===target);
+  if(z)return z;
+
+  // 2. L'un contient l'autre
+  z=pz.find(z=>{
+    const zn=nr(z.label);
+    return zn.includes(target)||target.includes(zn);
+  });
+  if(z)return z;
+
+  // 3. Matching par mots-clés communs (au moins 1 mot significatif en commun)
+  const targetWords=target.split(/(?=[A-Z0-9])/).filter(w=>w.length>2);
+  let bestScore=0,bestZone=null;
+  pz.forEach(z=>{
+    const zn=nr(z.label);
+    const score=targetWords.reduce((s,w)=>s+(zn.includes(w)?w.length:0),0);
+    if(score>bestScore){bestScore=score;bestZone=z;}
+  });
+  if(bestScore>=3)return bestZone;
+
+  return null;
+}
 function zUrg(label){
-  const nl=nr(label);const m=items.filter(i=>i.statut==='actif'&&nr(i.rayon)===nl);
-  if(!m.length)return null;const min=Math.min(...m.map(i=>du(i.dlc)));
+  const nl=nr(label);
+  const m=items.filter(i=>i.statut==='actif'&&nr(i.rayon)===nl);
+  if(!m.length)return null;
+  const min=Math.min(...m.map(i=>du(i.dlc)));
   if(min<0)return{lv:'exp',cnt:m.length};if(min===0)return{lv:'tod',cnt:m.length};
   if(min<=7)return{lv:'wk',cnt:m.length};return{lv:'ok',cnt:m.length};
 }
@@ -1893,8 +1946,7 @@ function fitPlan(){
 function openZP(z){
   const popup=document.getElementById('zpop');
   document.getElementById('zp-t').textContent=z.label;
-  const nl=nr(z.label);
-  const m=[...items.filter(i=>i.statut==='actif'&&nr(i.rayon)===nl)].sort((a,b)=>du(a.dlc)-du(b.dlc));
+  const m=[...items.filter(i=>i.statut==='actif'&&nr(i.rayon)===nr(z.label))].sort((a,b)=>du(a.dlc)-du(b.dlc));
   let html='';
   if(!m.length){html=`<div class="zp-empty">Aucun produit DLC pour ce rayon.<br>Ajoutez via l'onglet <strong>Ajouter</strong>.</div>`;}
   else{
